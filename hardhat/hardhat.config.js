@@ -19,15 +19,15 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x";
 const ETHERSCAN_API_KEY =
   process.env.ETHERSCAN_API_KEY || "Your etherscan API key";
 const REPORT_GAS = process.env.REPORT_GAS || false;
-
+MAINNET_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/pWcX8ihXg5mkG5_JM3Jpu5DAhV0gMetX"
 module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      // // If you want to do some forking, uncomment this
-      // forking: {
-      //   url: MAINNET_RPC_URL
-      // }
+      // If you want to do some forking, uncomment this
+      forking: {
+        url: MAINNET_RPC_URL
+      },
       chainId: 31337,
     },
     localhost: {
