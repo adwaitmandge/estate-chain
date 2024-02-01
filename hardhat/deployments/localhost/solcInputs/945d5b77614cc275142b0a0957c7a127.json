@@ -1,0 +1,36 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/MultiSigWallet.sol": {
+      "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.20;\r\n\r\ncontract MultiSigWallet {\r\n    event Deposit(address indexed sender, uint amount, uint balance);\r\n    event SubmitTransaction(\r\n        address indexed owner,\r\n        uint indexed txIndex,\r\n        address indexed to,\r\n        uint value,\r\n        bytes data\r\n    );\r\n    event ConfirmTransaction(address indexed owner, uint indexed txIndex);\r\n    event RevokeConfirmation(address indexed owner, uint indexed txIndex);\r\n    event ExecuteTransaction(address indexed owner, uint indexed txIndex);\r\n\r\n    address[] public owners;\r\n    mapping(address => bool) public isOwner;\r\n    uint public numConfirmationsRequired;\r\n\r\n    struct Transaction {\r\n        address to;\r\n        uint value;\r\n        bytes data;\r\n        bool executed;\r\n        uint numConfirmations;\r\n    }\r\n\r\n    // mapping from tx index => owner => bool\r\n    mapping(uint => mapping(address => bool)) public isConfirmed;\r\n\r\n    Transaction[] public transactions;\r\n\r\n    modifier onlyOwner() {\r\n        require(isOwner[msg.sender], \"not owner\");\r\n        _;\r\n    }\r\n\r\n    modifier txExists(uint _txIndex) {\r\n        require(_txIndex < transactions.length, \"tx does not exist\");\r\n        _;\r\n    }\r\n\r\n    modifier notExecuted(uint _txIndex) {\r\n        require(!transactions[_txIndex].executed, \"tx already executed\");\r\n        _;\r\n    }\r\n\r\n    modifier notConfirmed(uint _txIndex) {\r\n        require(!isConfirmed[_txIndex][msg.sender], \"tx already confirmed\");\r\n        _;\r\n    }\r\n\r\n    constructor(address[] memory _owners, uint _numConfirmationsRequired) {\r\n        require(_owners.length > 0, \"owners required\");\r\n        require(\r\n            _numConfirmationsRequired > 0 &&\r\n                _numConfirmationsRequired <= _owners.length,\r\n            \"invalid number of required confirmations\"\r\n        );\r\n\r\n        for (uint i = 0; i < _owners.length; i++) {\r\n            address owner = _owners[i];\r\n\r\n            require(owner != address(0), \"invalid owner\");\r\n            require(!isOwner[owner], \"owner not unique\");\r\n\r\n            isOwner[owner] = true;\r\n            owners.push(owner);\r\n        }\r\n\r\n        numConfirmationsRequired = _numConfirmationsRequired;\r\n    }\r\n\r\n    receive() external payable {\r\n        emit Deposit(msg.sender, msg.value, address(this).balance);\r\n    }\r\n\r\n    function submitTransaction(\r\n        address _to,\r\n        uint _value,\r\n        bytes memory _data\r\n    ) public onlyOwner {\r\n        uint txIndex = transactions.length;\r\n\r\n        transactions.push(\r\n            Transaction({\r\n                to: _to,\r\n                value: _value,\r\n                data: _data,\r\n                executed: false,\r\n                numConfirmations: 0\r\n            })\r\n        );\r\n\r\n        emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data);\r\n    }\r\n\r\n    function confirmTransaction(\r\n        uint _txIndex\r\n    )\r\n        public\r\n        onlyOwner\r\n        txExists(_txIndex)\r\n        notExecuted(_txIndex)\r\n        notConfirmed(_txIndex)\r\n    {\r\n        Transaction storage transaction = transactions[_txIndex];\r\n        transaction.numConfirmations += 1;\r\n        isConfirmed[_txIndex][msg.sender] = true;\r\n\r\n        emit ConfirmTransaction(msg.sender, _txIndex);\r\n    }\r\n\r\n    function executeTransaction(\r\n        uint _txIndex\r\n    ) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) {\r\n        Transaction storage transaction = transactions[_txIndex];\r\n\r\n        require(\r\n            transaction.numConfirmations >= numConfirmationsRequired,\r\n            \"cannot execute tx\"\r\n        );\r\n\r\n        transaction.executed = true;\r\n\r\n        (bool success, ) = transaction.to.call{value: transaction.value}(\r\n            transaction.data\r\n        );\r\n        require(success, \"tx failed\");\r\n\r\n        emit ExecuteTransaction(msg.sender, _txIndex);\r\n    }\r\n\r\n    function revokeConfirmation(\r\n        uint _txIndex\r\n    ) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) {\r\n        Transaction storage transaction = transactions[_txIndex];\r\n\r\n        require(isConfirmed[_txIndex][msg.sender], \"tx not confirmed\");\r\n\r\n        transaction.numConfirmations -= 1;\r\n        isConfirmed[_txIndex][msg.sender] = false;\r\n\r\n        emit RevokeConfirmation(msg.sender, _txIndex);\r\n    }\r\n\r\n    function getOwners() public view returns (address[] memory) {\r\n        return owners;\r\n    }\r\n\r\n    function getTransactionCount() public view returns (uint) {\r\n        return transactions.length;\r\n    }\r\n\r\n    function getTransaction(\r\n        uint _txIndex\r\n    )\r\n        public\r\n        view\r\n        returns (\r\n            address to,\r\n            uint value,\r\n            bytes memory data,\r\n            bool executed,\r\n            uint numConfirmations\r\n        )\r\n    {\r\n        Transaction storage transaction = transactions[_txIndex];\r\n\r\n        return (\r\n            transaction.to,\r\n            transaction.value,\r\n            transaction.data,\r\n            transaction.executed,\r\n            transaction.numConfirmations\r\n        );\r\n    }\r\n}\r\n"
+    }
+  },
+  "settings": {
+    "evmVersion": "paris",
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
