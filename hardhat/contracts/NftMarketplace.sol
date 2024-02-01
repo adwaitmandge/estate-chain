@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
@@ -9,6 +12,15 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 //buy: buy nfts from marketplace
 //cancel: cancel nfts from marketplace
 //withdraw funds from marketplace
+
+error Raffle__UpkeepNotNeeded(
+    uint256 currentBalance,
+    uint256 numPlayers,
+    uint256 raffleState
+);
+error Raffle__TransferFailed();
+error Raffle__SendMoreToEnterRaffle();
+error Raffle__RaffleNotOpen();
 
 error NftMarketplace_PriceNotValid();
 error NftMarketplace_NotApprovedForMarketPlace();
@@ -79,6 +91,42 @@ contract NftMarketPlace is ReentrancyGuard {
         _;
     }
 
+    function checkUpkeep(
+        bytes memory /* checkData */
+    )
+        public
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
+        bool isOpen = RaffleState.OPEN == s_raffleState;
+        bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
+        bool hasPlayers = s_players.length > 0;
+        bool hasBalance = address(this).balance > 0;
+        upkeepNeeded = (timePassed && isOpen && hasBalance && hasPlayers);
+        return (upkeepNeeded, "0x0"); // can we comment this out?
+    }
+
+    /**
+     * @dev Once `checkUpkeep` is returning `true`, this function is called
+     * and it kicks off a Chainlink VRF call to get a random winner.
+     */
+    function performUpkeep(bytes calldata /* performData */) external override {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        // require(upkeepNeeded, "Upkeep not needed");
+        if (!upkeepNeeded) {}
+        s_raffleState = RaffleState.CALCULATING;
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS
+        );
+        // Quiz... is this redundant?
+        emit RequestedRaffleWinner(requestId);
+    }
+
     /////Main Functions /////
     /*
      * @notice Method for listing NFT
@@ -86,6 +134,7 @@ contract NftMarketPlace is ReentrancyGuard {
      * @param tokenId Token ID of NFT
      * @param price sale price for each item
      */
+
     function listItem(
         address nftAddress,
         uint256 tokenId,

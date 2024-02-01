@@ -1,15 +1,21 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
-import './index.css';
-import { persistor, store } from './redux/store.js';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.jsx";
+import "./index.css";
+import { persistor, store } from "./redux/store.js";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import { MoralisProvider } from "react-moralis";
+import { NotificationProvider } from "web3uikit";
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <Provider store={store}>
-    <PersistGate loading={null} persistor={persistor}>
-      <App />
-    </PersistGate>
-  </Provider>
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <MoralisProvider initializeOnMount={false}>
+    <NotificationProvider>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <App />
+        </PersistGate>
+      </Provider>
+    </NotificationProvider>
+  </MoralisProvider>
 );
