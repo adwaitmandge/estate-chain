@@ -1,4 +1,4 @@
-# ApnaBaazar
+# KARTESTATE
 
 <h1 align="center">
   <a href="https://github.com/CommunityOfCoders/Inheritance-2022">
@@ -9,7 +9,7 @@
 </h1>
 
 <div align="center">
-   <strong>ApnaBaazar</strong>:- is an Ethereum-based Decentralised Application <br>
+   <strong>KARTESTATE</strong>:- Real Estate on the Blockchain <br>
 <!--   <a href="https://github.com/stealth-bombeer/Learning-In/stargazers"><img alt="GitHub issues" src="https://img.shields.io/github/stars/stealth-bombeer/Learning-In"></a>
   <a href="https://github.com/stealth-bombeer/Learning-In/network/members"><img alt="GitHub stars" src="https://img.shields.io/github/forks/stealth-bombeer/Learning-In"></a>
   <a href="https://github.com/stealth-bombeer/Learning-In/issues"><img alt="GitHub contributors" src="https://img.shields.io/github/issues/stealth-bombeer/Learning-In"></a> -->
@@ -35,8 +35,8 @@
 <table>
   <tr>
     <td>
-<strong>ApnaBaazar</strong>:- <br>
-      A Next-based Decentralised Appication which allows users to create, sell and buy digital collectibles
+<strong>KartEstate</strong>:- <br>
+KartEstate leverages blockchain technology to address several key pain points in the traditional real estate system, offering increased transparency, security, and efficiency. Let's delve into each feature and how it streamlines the process:
 <br><br>
    
  
